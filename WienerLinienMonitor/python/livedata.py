@@ -108,6 +108,10 @@ class LoadData:
         return self.rawdata
     def get_SetOfDepartures(self):
         return self.SetOfDepartures
+    def get_Ref_Time(self):
+        return self.Ref_Time
+    def get_LINES(self):
+        return LINES.copy()
     #------------DataComuptation------------------------------------------------------------
 
     def init_setOfDepartures(self):
@@ -152,7 +156,7 @@ class LoadData:
         #Train_origin_str = line_destinations[direction == "R"] #indexes 0 if direction == H, 1 otherwise
         
         station_index = getStationIndex(line,diva)
-        print(line, "->",destination,dep_times)
+        #print(line, "->",destination,dep_times)
         
         #should be unused
         #destination_diva = getDiva(destination) #das funkt nicht imma
@@ -162,7 +166,7 @@ class LoadData:
         delta_time = TRAVEL_TIME_LINES[line + "von" + str(diva)]
 
         #looking back in time
-        print(getStationName(diva),line,destination,station_index,f"from{origin_index}")
+        #print(getStationName(diva),line,destination,station_index,f"from{origin_index}")
         start_index = min(station_index,origin_index)
         stop_index = max(station_index,origin_index) 
 
@@ -179,9 +183,9 @@ class LoadData:
 
                     if(cutoff_expired_dep_index + third_index<dep_times_station.size):
                         DepArray[index,int(DepArray_second_index),third_index] = dep_times_station[cutoff_expired_dep_index + third_index]
-                        print(f"val_added origin_station_index = {station_index}, Line = {line}, StationIndex = {index}, direction = {direction}\n{index,int(DepArray_second_index),third_index}")
-            else:     # throws if delta_time[index] is NaN or station data to much behind
-                print(f"no_pos_val_in_dep_times: Line = {line}, StationIndex = {index}, direction = {direction}\n dep_times_station = {dep_times_station}, CUTOFF = {CUTOFF_EXPIRED_DESTINATIONS}")
+                        #print(f"val_added origin_station_index = {station_index}, Line = {line}, StationIndex = {index}, direction = {direction}\n{index,int(DepArray_second_index),third_index}")
+            #else:     # throws if delta_time[index] is NaN or station data to much behind
+                #print(f"no_pos_val_in_dep_times: Line = {line}, StationIndex = {index}, direction = {direction}\n dep_times_station = {dep_times_station}, CUTOFF = {CUTOFF_EXPIRED_DESTINATIONS}")
                 
         return DepArray
             
@@ -212,7 +216,7 @@ class LoadData:
                 if(index_other_meassure_station in range(index_train_origin,index_meassure_station,range_direction)):
                     L.append(index_other_meassure_station)
         LN = np.array(L)
-        print("LN:",LN)
+        #print("LN:",LN)
         return range_direction*np.max(range_direction*LN)
                 
     def get_destinations_from_station_and_line(self,station_diva,line_searched):
@@ -242,7 +246,7 @@ class LoadData:
             
             A[train_direction == "R"] = train_towards
             if(A[0]!="" and A[1]!="") :
-                print("found:",A)
+                #print("found:",A)
                 return A
         pass
 

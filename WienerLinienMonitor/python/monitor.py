@@ -1,62 +1,62 @@
 import pandas as pd
 import numpy as np
+import time
 import datetime
-import main
 
-class monitor:
+#GPIO
 
+#seconds ... offset gets added to localtime, pos. value decreases localTime, therefore train arrives later and departs later
+PINS_LINE_SELECT = {"U1":14,"U2":15,"U3":18,"U4":25,"U5":8,"U6":7}
+PIN_SDO = 12
+PIN_CLK = 16
+PIN_OE_NOT = 20
+PIN_LATCH = 21
+SHIFT_REGISTER_SIZE = 48
+
+class Monitor:
+    def __init__(self,Lines) -> None:
+        self.Lines = Lines
+        self.init_display()
     #------------GPIO-----------------------------------------------------------------------
 
-    def Display(self):
-        loops_without_update = 0
-        data = None
-        for i in range(100):
-            
-            """Format of station data {"line":{"station_name":[DepartureTimes], ...}, ...}
-            """
+    def init_display(self):
+    #set all transistors off
+    #output enable = high (no display)
+    #latch = false
+    #...
+        return  
 
-            #check data
-            update_needed = False
-            #if in any station there is no data for departures after the current time, the flag update_needed is set True
-            #load new data if necesarry and ok to do so
-            
-            #update lightning state of leds
-            self.updateDisplayData(data)
-            self.lightDisplay(self.DisplayData) #may need a dedicated thread
-            loops_without_update += 1
-        pass
 
-    def updateDisplayData(self,ref_time,DepartureData):
-        """ Format of DepartureData 
-            {str "line":{str "station_name":
-                nd-array[int station_index][int direction][int rank_of_departure] = int departure_after_reftime_in_seconds, ...}
-            shape of nd-array is: (number_of_stations_on_line,2,DEPARTURE_LOOKAHEAD)
+    def lightDisplay(self,DisplayData):
+        for line in self.Lines:
             
-            returns DisplayData
-            Format of DisplayData {str "line":
-                nd-array [int station_index][int direction] = int TrainInStation (0 means no, 1 means yes)
-                , ...}
-        """
-        
-        time_now = datetime.now()
-        seconds_since_reftime = (time_now - ref_time).total_seconds()
-        
-        DisplayData = {}
-        for line_key in DepartureData.keys():
-            LineDepartureData = DepartureData[line_key] #dict
-            number_of_stations = np.shape(LineDepartureData)[0]
-            LineDisplayData = np.zeros((number_of_stations,2),dtype = int)
+            #myb a timefunction for controlling on time of leds
+            LinePin = PINS_LINE_SELECT[line]
+            #GPIO.output(LinePin,0) #set transistor on
             
-            for i in range(number_of_stations):
-                for j in range(2):
-                    arrival_times = LineDepartureData[i,j] - seconds_since_reftime + main.TRAIN_DEPARTURE_DELAY_TIME_OFFSET
-                    departure_times = arrival_times + main.TRAIN_IN_STATION_TIME
-                    #if(line_key=="U3"):
-                        #print("print",arrival_times*departure_times)
-                    if(any(arrival_times*departure_times<0)):
-                        LineDisplayData[i,j] = 1
-            DisplayData[line_key] = LineDisplayData
-        self.DisplayData = DisplayData
+            ### Transmit signal
+            Number_of_stations = len(DisplayData[line])
+            for i in range(SHIFT_REGISTER_SIZE): #padding
+                self.push_shiftregister(0)
+            
+            for i in range(1,Number_of_stations,-1): #reverse order
+                self.push_shiftregister(DisplayData[line][i])
+            
+            #latch_data
+            self.push_shiftregister(DisplayData[line][0],latch=True)
+            
+            ### light leds
+            #GPIO.output(PIN_OE_NOT,0)
+            time.sleep(1) # 
+            #GPIO.output(PIN_OE_NOT,1)
+            #GPIO.output(LinePin,1) #transistor off
 
-    
-
+    def push_shiftregister(Led_turned_on,latch = False):
+        #GPIO.output(PIN_SDO,int(Led_turned_on))
+    #    if(latch):
+            #GPIO.output(PIN_LATCH,1)
+        #GPIO.output(PIN_CLK,1)
+        #GPIO.output(PIN_CLK,0)
+        #GPIO.output(PIN_LATCH,0)
+        #GPIO.output(PIN_SDO,0)
+        return
