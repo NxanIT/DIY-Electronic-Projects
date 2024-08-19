@@ -1,11 +1,8 @@
-import pandas as pd
 import numpy as np
 import time
-import datetime
 
 #GPIO
 
-#seconds ... offset gets added to localtime, pos. value decreases localTime, therefore train arrives later and departs later
 PINS_LINE_SELECT = {"U1":14,"U2":15,"U3":18,"U4":25,"U5":8,"U6":7}
 PIN_SDO = 12
 PIN_CLK = 16
@@ -47,7 +44,7 @@ class Monitor:
             
             ### light leds
             #GPIO.output(PIN_OE_NOT,0)
-            time.sleep(1) # 
+            time.sleep(0.02) # 
             #GPIO.output(PIN_OE_NOT,1)
             #GPIO.output(LinePin,1) #transistor off
 
