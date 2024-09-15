@@ -9,6 +9,7 @@ from monitor import Monitor
 
 
 def print_mode1_SetOfDepartures(DepSet):
+    print("printing SetOfDepartures [Displaymode == 1]...")
     for line in DepSet.keys():
         
         depLine = DepSet[line]
@@ -25,6 +26,10 @@ def print_mode1_SetOfDepartures(DepSet):
 def main():
     t1 = datetime.datetime.now()
     Data = LoadData()
+    #print(Data.get_rawdata())
+    print(Data.get_Ref_Time())
+    print_mode1_SetOfDepartures(Data.get_SetOfDepartures())
+    exit()
     Lines = Data.get_LINES()
     #Output_Monitor = Monitor(Lines)
     print(f"init finished, took {datetime.datetime.now()-t1}")

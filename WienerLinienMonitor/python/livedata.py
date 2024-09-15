@@ -7,6 +7,7 @@ import datetime
 #------------global constants------------------------------------------------------------
 #constants
 DISPLAY_MODE = 0 #int - 0 or 1, 0 for approximate live in station times, 1 for continous mode
+DEBUG_MODE = 0 #if equals 1 then no live data is loaded, instead a file with some d
 LINES = ["U1","U2","U3","U4","U6"]
 STATIONS = {}
 STATION_NAME_DICT = {}#keys are DIVA numbers, val are Station Names
@@ -93,6 +94,10 @@ class LoadData:
         return string
 
     def __generateLiveData(self):
+        if(DEBUG_MODE):
+            with open("WienerLinienMonitor\\python\\monitor.json",encoding="utf-8") as file:
+                data = json.load(file)
+            return data
         URL = self.generateAPI_URL(STATIONS_MEASSURED)
         with urllib.request.urlopen(URL) as url:
                 data = json.loads(url.read().decode())
@@ -122,12 +127,16 @@ class LoadData:
         return self.Ref_Time
     def get_LINES(self):
         return LINES.copy()
-#------------DataComuptation-------------------------------------------------------------
+#------------DataComuptation-STEP-1------------------------------------------------------------
     
     def updateDepartureData(self):
         self.SetOfDepartures = {}
         self.Ref_Time =  datetime.datetime.now()
-    
+        if(DEBUG_MODE):
+            Debug_time = time.strptime("2024-08-21T16:19:45.000+0200",'%Y-%m-%dT%H:%M:%S.000%z')
+            Debug_datetime = datetime.datetime.fromtimestamp(time.mktime(Debug_time))
+            self.Ref_Time = Debug_datetime
+
         List_of_allStations = self.rawdata["data"]["monitors"]
         for index in range(len(List_of_allStations)):
             LocationStop = List_of_allStations[index]
@@ -145,7 +154,7 @@ class LoadData:
                         self.updateLineArray_mode1(station_diva,departing_line,withprevData=True, prevData=self.SetOfDepartures[line])
                 
                     self.SetOfDepartures[line] = self.SetOfDepartures[line] | newLine
-                    print(line,getStationName(station_diva),"hahapdppf")
+                    
                 else:
                     newLine = self.updateLineArray_mode0(station_diva,departing_line) if DISPLAY_MODE==0 else \
                         self.updateLineArray_mode1(station_diva,departing_line)
@@ -175,7 +184,6 @@ class LoadData:
             else: DepArray = DepartureSet[diva]
 
         DepArray_direction_index = 1*(direction == "R")
-        print(line,getStationName(diva),direction,"->",dep_times)
         for i in range(min(lookahead_len,np.size(dep_times))):
             DepArray[DepArray_direction_index,i] = dep_times[i]
 
@@ -209,7 +217,6 @@ class LoadData:
                 self.flag_update_needed = True
                 #print(f"no_pos_val_in_dep_times: Line = {line}, StationIndex = {index}, direction = {direction}\n dep_times_station = {dep_times_station}, CUTOFF = {CUTOFF_EXPIRED_DEPARTURES}")
                 continue 
-            print("dep",dep_times_station)
             cutoff_expired_dep_index = np.argwhere(dep_times_station>CUTOFF_EXPIRED_DEPARTURES)[0][0]
             for third_index in range(DepArray_number_of_departures):
                 if(cutoff_expired_dep_index + third_index<dep_times_station.size):
@@ -292,6 +299,8 @@ class LoadData:
     def seconds_since(self,since_time):
         return (datetime.datetime.now()-since_time).total_seconds()
 
+#--------DATA-COMPUTATION-STEP-2------------------------------------------------------------------------------------
+
     def updateDisplayData(self):
         """ Format of DepartureData 
             {str "line":{str "station_name":
@@ -314,8 +323,11 @@ class LoadData:
             DisplayData[line_key] = newLineData
         return DisplayData
 
-    def updateDisplayData_mode1(self):
-        #TODO
+
+    def updateDisplayData_mode1(self,LineDepartureData,seconds_since_reftime):
+        number_of_stations = np.shape(LineDepartureData)[0]
+        LineDisplayData = np.zeros((number_of_stations,2),dtype = int)
+        
         pass
 
     def updateDisplayData_mode0(self,LineDepartureData,seconds_since_reftime):
